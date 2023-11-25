@@ -52,7 +52,7 @@ if __name__ == "__main__":
     parser.add_argument('--cvss', type=str, default='data/cvss', help='Path to the CVSS data')
     parser.add_argument('--cv', type=str, default='data/cv', help='Path to the CV data')
     parser.add_argument('--output', type=str, default='data/preprocessed', help='Path to the output folder')
-    parser.add_argument('--size', type=int, default=1000, help='Number of samples to use from CVSS, if 0 use all samples')
+    parser.add_argument('--size', type=int, default=0, help='Number of samples to use from CVSS, if 0 use all samples')
     args = parser.parse_args()
 
     print("Converting CV to wav and 24khz.")
