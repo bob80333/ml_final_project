@@ -130,7 +130,7 @@ if __name__ == "__main__":
     # 4. use pyrubberband to time stretch the shorter audios in each pair to match the longer one
     # FUTURE EDIT: not doing this, see comments at top of file
     
-    # 5. TODO: take the data and use the CVSS split to split the CV data into train, dev, test folders
+    # 5. take the data and use the CVSS split to split the CV data into train, dev, test folders
     # also move all the data into new folders
     
     # make output directories
