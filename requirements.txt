@@ -1,0 +1,5 @@
+torch
+soundfile
+einops
+pytorch-metric-learning
+wandb
