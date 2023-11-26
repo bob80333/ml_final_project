@@ -1,4 +1,5 @@
 import config
+import evaluation
 import torch
 from tqdm import trange
 
@@ -50,7 +51,7 @@ class Trainer:
         val_loader = torch.utils.data.DataLoader(
             self.val_dataset,
             batch_size=config.BATCH_SIZE,
-            shuffle=True,
+            shuffle=False,
             num_workers=config.N_WORKERS,
             persistent_workers=True,
         )
@@ -58,6 +59,8 @@ class Trainer:
         train_loader = infinite_data_generator(train_loader)
 
         pbar = trange(config.TRAIN_STEPS)
+        
+        best_accuracy = -1
         for step in pbar:
             batch = next(train_loader)
             loss = self.train_step(batch)
@@ -66,53 +69,18 @@ class Trainer:
 
             if step % config.EVAL_EVERY == 0:
                 print(f"Step {step}, loss: {loss}")
-                self.eval(val_loader)
-                torch.save(self.model.state_dict(), f"model_{step}.pt")
+                accuracy = self.eval(val_loader)
+                if best_accuracy < accuracy:
+                    best_accuracy = accuracy
+                    torch.save(self.model.state_dict(), f"{config.CHECKPOINT_PATH}/best_model.pt")
+                torch.save(self.model.state_dict(), f"{config.CHECKPOINT_PATH}/model_{step}.pt")
                 self.model.train()
+                
+                
+        print("Training complete!")
 
     def eval(self, dataloader):
-        self.model.eval()
-        with torch.no_grad():
-            all_german_embeds = []
-            all_english_embeds = []
-            for batch in dataloader:
-                english_audio, german_audio, idx = batch
-                english_audio = english_audio.to(self.device)
-                german_audio = german_audio.to(self.device)
-                ids = idx.to(self.device)
+        # return accuracy (k=1)
+        return evaluation.evaluate_r_at_k(dataloader, self.model, self.device, config.KS)[0]
 
-                german_embeds = self.model(german_audio)
-                english_embeds = self.model(english_audio)
-
-                all_german_embeds.append(german_embeds)
-                all_english_embeds.append(english_embeds)
-
-            all_german_embeds = torch.cat(all_german_embeds, dim=0)
-            all_english_embeds = torch.cat(all_english_embeds, dim=0)
-
-            # calculate r@k
-            r_values = []
-            for k in config.KS:
-                r = 0
-                for i in range(
-                    0,
-                    len(all_german_embeds),
-                ):
-                    # get the embeddings of the german audio
-                    german_embed = all_german_embeds[i]
-                    # calculate the cosine similarity between the english audio and all the german audio
-                    cosine_similarities = torch.nn.functional.cosine_similarity(
-                        all_english_embeds, german_embed
-                    )
-                    # get the indices of the top k most similar german audio
-                    top_k = cosine_similarities.topk(
-                        k=k, largest=True, sorted=True
-                    ).indices
-                    # check if the index of the first english audio is in the top k most similar german audio
-                    if i in top_k:
-                        r += 1
-                r /= len(all_german_embeds) / 2
-                r_values.append(r)
-
-            print(f"r@{config.KS}: {r_values}")
-            return r_values
+    
