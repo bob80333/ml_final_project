@@ -1,3 +1,4 @@
+from sklearn.base import accuracy_score
 import config
 import evaluation
 import torch
@@ -60,16 +61,22 @@ class Trainer:
 
         pbar = trange(config.TRAIN_STEPS)
         
+        # save values for plotting
+        loss_values = torch.empty(config.TRAIN_STEPS)
+        accuracy_values = torch.ones(config.TRAIN_STEPS) * -1 # -1 for non evaluated steps, so we can remove them later when plotting
+        
+        # save best model
         best_accuracy = -1
         for step in pbar:
             batch = next(train_loader)
             loss = self.train_step(batch)
 
             pbar.set_description(f"Step {step}, loss: {loss}")
-
+            loss_values[step] = loss
             if step % config.EVAL_EVERY == 0:
                 print(f"Step {step}, loss: {loss}")
                 accuracy = self.eval(val_loader)
+                accuracy_values[step] = accuracy
                 if best_accuracy < accuracy:
                     best_accuracy = accuracy
                     torch.save(self.model.state_dict(), f"{config.CHECKPOINT_PATH}/best_model.pt")
@@ -78,6 +85,10 @@ class Trainer:
                 
                 
         print("Training complete!")
+        
+        # save loss and accuracy values for plotting later
+        torch.save(loss_values, f"{config.CHECKPOINT_PATH}/loss_values.pt")
+        torch.save(accuracy_values, f"{config.CHECKPOINT_PATH}/accuracy_values.pt")
 
     def eval(self, dataloader):
         # return accuracy (k=1)
