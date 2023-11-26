@@ -157,7 +157,7 @@ if __name__ == "__main__":
     
     
     # create set of empty files to avoid copying for either german or english
-    empty_files = set([x.split('/')[-1] for x in empty_files])
+    empty_files = set([str(x).split('/')[-1] for x in empty_files])
     
     # move the CV data
     # get all train files of cvss, then change to CV paths
