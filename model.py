@@ -11,7 +11,7 @@ class ConvModel(nn.Module):
 
 # will use a patching operation to reduce the sequence length from 16384 to 256, 64x patching, then use a transformer
 class TransformerModel(nn.Module):
-    def __init__(self, patching=64, width=512, layers=8):
+    def __init__(self, patching=64, width=256, layers=4):
         super().__init__()
         self.patching = patching
         self.width = width
