@@ -32,6 +32,7 @@ import argparse
 import os
 import subprocess
 from pathlib import Path
+import shutil
 import torch
 from tqdm import tqdm
 import random
@@ -92,10 +93,14 @@ if __name__ == "__main__":
     
     print("Processing CV data.")
     os.makedirs(f'{args.cv}/clips_wav_speechonly', exist_ok=True)
+    empty_files = []
     # tqdm gives progress bar
     for file in tqdm(files):
         wav = read_audio(str(file), sampling_rate=VAD_SAMPLE_RATE)
         speech_timestamps = get_speech_timestamps(wav, model, sampling_rate=VAD_SAMPLE_RATE)
+        if len(speech_timestamps) == 0:
+            empty_files.append(file)
+            continue
         # save only the speech segments to a new directory
         rescale_speech_timesteps(speech_timestamps, VAD_SAMPLE_RATE, 24000)
         wav_fullres = read_audio(str(file), sampling_rate=24000)
@@ -115,6 +120,9 @@ if __name__ == "__main__":
         wav = read_audio(str(file), sampling_rate=VAD_SAMPLE_RATE)        
         wav_fullres = read_audio(str(file), sampling_rate=24000)
         speech_timestamps = get_speech_timestamps(wav, model, sampling_rate=VAD_SAMPLE_RATE)
+        if len(speech_timestamps) == 0:
+            empty_files.append(file)
+            continue
         # save only the speech segments to a new directory
         if "train" in file:
             file = file.replace("train", "train_speechonly")
@@ -147,25 +155,46 @@ if __name__ == "__main__":
     os.makedirs(f'{args.output}/test/german', exist_ok=True)
     os.makedirs(f'{args.output}/test/english', exist_ok=True)
     
+    
+    # create set of empty files to avoid copying for either german or english
+    empty_files = set([str(x.absolute()).split('/')[-1] for x in empty_files])
+    
     # move the CV data
     # get all train files of cvss, then change to CV paths
     train_files = [str(x.absolute()).replace(args.cvss, args.cv).replace("train_speechonly", "clips_wav_speechonly") for x in Path(f'{args.cvss}/train_speechonly').rglob('*.wav')]
+    # avoid copying empty files so neither of pair of languages has empty files
+    train_files = [x for x in train_files if x.split("/")[-1] not in empty_files]
     for file in train_files:
-        subprocess.run(f'mv {file} {args.output}/train/german', shell=True)
+        shutil.move(file, f'{args.output}/train/german')
         
     dev_files = [str(x.absolute()).replace(args.cvss, args.cv).replace("dev_speechonly", "clips_wav_speechonly") for x in Path(f'{args.cvss}/dev_speechonly').rglob('*.wav')]
+    dev_files = [x for x in dev_files if x.split("/")[-1] not in empty_files]
     for file in dev_files:
-        subprocess.run(f'mv {file} {args.output}/dev/german', shell=True)
+        shutil.move(file, f'{args.output}/dev/german')
         
     test_files = [str(x.absolute()).replace(args.cvss, args.cv).replace("test_speechonly", "clips_wav_speechonly") for x in Path(f'{args.cvss}/test_speechonly').rglob('*.wav')]
+    test_files = [x for x in test_files if x.split("/")[-1] not in empty_files]
     for file in test_files:
-        subprocess.run(f'mv {file} {args.output}/test/german', shell=True)
+        shutil.move(file, f'{args.output}/test/german')
     
     
-    # move the CVSS data
-    subprocess.run(f'mv {args.cvss}/train_speechonly/*.wav {args.output}/train/english', shell=True)
-    subprocess.run(f'mv {args.cvss}/dev_speechonly/*.wav {args.output}/dev/english', shell=True)
-    subprocess.run(f'mv {args.cvss}/test_speechonly/*.wav {args.output}/test/english', shell=True)
+    # move the CVSS data using shutil
+    
+    train_files = [str(x.absolute()) for x in Path(f'{args.cvss}/train_speechonly').rglob('*.wav')]
+    # again avoid copying empty files
+    train_files = [x for x in train_files if x.split("/")[-1] not in empty_files]
+    for file in train_files:
+        shutil.move(file, f'{args.output}/train/english')
+        
+    dev_files = [str(x.absolute()) for x in Path(f'{args.cvss}/dev_speechonly').rglob('*.wav')]
+    dev_files = [x for x in dev_files if x.split("/")[-1] not in empty_files]
+    for file in dev_files:
+        shutil.move(file, f'{args.output}/dev/english')
+        
+    test_files = [str(x.absolute()) for x in Path(f'{args.cvss}/test_speechonly').rglob('*.wav')]
+    test_files = [x for x in test_files if x.split("/")[-1] not in empty_files]
+    for file in test_files:
+        shutil.move(file, f'{args.output}/test/english')
     
     # 6. delete all the intermediate files creating during preprocessing
     
