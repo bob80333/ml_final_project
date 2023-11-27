@@ -10,9 +10,9 @@ def evaluate_r_at_k(dataloader, model, device, ks):
         for english_audio, german_audio, _ in dataloader:
             english_audio = english_audio.to(device)
             german_audio = german_audio.to(device)
-
-            german_embeds = model(german_audio)
-            english_embeds = model(english_audio)
+            with torch.autocast(device, dtype=torch.bfloat16):
+                german_embeds = model(german_audio)
+                english_embeds = model(english_audio)
 
             all_german_embeds.append(german_embeds)
             all_english_embeds.append(english_embeds)

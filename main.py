@@ -2,6 +2,7 @@ import trainer
 import tester
 import argparse
 import os
+import torch
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -9,6 +10,8 @@ if __name__ == "__main__":
     parser.add_argument("--train", help="train the model", action="store_true")
     parser.add_argument("--test", help="test the model", action="store_true")
     args = parser.parse_args()
+
+    torch.set_float32_matmul_precision('high')
     
     if args.train or args.test:
         # make sure checkpoint dir exists

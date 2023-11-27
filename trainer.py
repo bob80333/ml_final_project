@@ -13,10 +13,9 @@ def infinite_data_generator(loader):
 class Trainer:
     def __init__(self, device):
         self.device = device
-        self.model = config.MODEL().to(device)
+        self.model = torch.compile(config.MODEL().to(device))
         self.optimizer = config.OPTIM(self.model.parameters(), lr=config.LR)
         self.criterion = config.LOSS()
-
         self.train_dataset = config.DATASET(config.DATA_PATH + "/train")
         self.val_dataset = config.DATASET(config.DATA_PATH + "/dev")
 
@@ -30,9 +29,10 @@ class Trainer:
 
         all_audio = torch.cat((english_audio, german_audio), dim=0)
         all_ids = ids.squeeze().repeat(2)
-
-        all_embeds = self.model(all_audio)
-        loss = self.criterion(all_embeds, all_ids)
+        
+        with torch.autocast(self.device, dtype=torch.bfloat16):
+            all_embeds = self.model(all_audio)
+            loss = self.criterion(all_embeds, all_ids)
         loss.backward()
         self.optimizer.step()
 
