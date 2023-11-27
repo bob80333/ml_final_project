@@ -1,4 +1,3 @@
-from sklearn.base import accuracy_score
 import config
 import evaluation
 import torch
@@ -18,20 +17,19 @@ class Trainer:
         self.optimizer = config.OPTIM(self.model.parameters(), lr=config.LR)
         self.criterion = config.LOSS()
 
-        self.train_dataset = config.DATA_PATH + "/train"
-        self.val_dataset = config.DATA_PATH + "/val"
+        self.train_dataset = config.DATASET(config.DATA_PATH + "/train")
+        self.val_dataset = config.DATASET(config.DATA_PATH + "/dev")
 
     def train_step(self, batch):
         self.model.train()
         self.optimizer.zero_grad()
-
         english_audio, german_audio, idx = batch
         english_audio = english_audio.to(self.device)
         german_audio = german_audio.to(self.device)
         ids = idx.to(self.device)
 
         all_audio = torch.cat((english_audio, german_audio), dim=0)
-        all_ids = ids.repeat(2)
+        all_ids = ids.squeeze().repeat(2)
 
         all_embeds = self.model(all_audio)
         loss = self.criterion(all_embeds, all_ids)
@@ -41,12 +39,13 @@ class Trainer:
         return loss.item()
 
     def train(self):
+        print("create data loaders")
         train_loader = torch.utils.data.DataLoader(
             self.train_dataset,
             batch_size=config.BATCH_SIZE,
             shuffle=True,
             num_workers=config.N_WORKERS,
-            persistent_workers=True,
+            persistent_workers=False,
             drop_last=True,
         )
         val_loader = torch.utils.data.DataLoader(
@@ -54,19 +53,20 @@ class Trainer:
             batch_size=config.BATCH_SIZE,
             shuffle=False,
             num_workers=config.N_WORKERS,
-            persistent_workers=True,
+            persistent_workers=False,
         )
 
         train_loader = infinite_data_generator(train_loader)
 
         pbar = trange(config.TRAIN_STEPS)
-        
+        print("biuld tensor for values")
         # save values for plotting
         loss_values = torch.empty(config.TRAIN_STEPS)
         accuracy_values = torch.ones(config.TRAIN_STEPS) * -1 # -1 for non evaluated steps, so we can remove them later when plotting
         
         # save best model
         best_accuracy = -1
+        print("start train loop")
         for step in pbar:
             batch = next(train_loader)
             loss = self.train_step(batch)

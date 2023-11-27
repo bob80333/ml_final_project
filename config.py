@@ -5,7 +5,7 @@ import dataset
 
 OPTIM = torch.optim.AdamW
 LR = 3e-4
-BATCH_SIZE = 64
+BATCH_SIZE = 8
 
 LOSS = losses.SupConLoss
 
@@ -14,9 +14,9 @@ EVAL_EVERY = 200
 
 MODEL = model.TransformerModel
 
-DATSET = dataset.CVSS_T
-DATA_PATH = "data/preprocessed"
-N_WORKERS = 2
+DATASET = dataset.CVSS_T
+DATA_PATH = "data/preprocessed_10k"
+N_WORKERS = 0
 
 KS = [1, 2, 4]  # for recall@k, (k = 1 is accuracy)
 

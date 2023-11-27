@@ -7,8 +7,7 @@ def evaluate_r_at_k(dataloader, model, device, ks):
     with torch.no_grad():
         all_german_embeds = []
         all_english_embeds = []
-        for batch in dataloader:
-            english_audio, german_audio, _ = batch
+        for english_audio, german_audio, _ in dataloader:
             english_audio = english_audio.to(device)
             german_audio = german_audio.to(device)
 

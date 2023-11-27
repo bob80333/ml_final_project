@@ -3,20 +3,18 @@ import torch
 import soundfile as sf # fast crossplatform audio loading
 from pathlib import Path
 
-# TODO: change this code to work with the preprocessed data once the preprocessing is done
-
 class CVSS_T(Dataset):
-    def __init__(self, english_folder, german_folder, segment_length=2**14, random_segment=True):
+    def __init__(self, main_folder, segment_length=2**14, random_segment=True):
         # cvss_folder: Path to the folder containing the CVSS audio files, e.g. 'data/cvss/train'
         # cv_folder: Path to the folder containing the original commonvoice audio files, e.g. 'data/cv/clips'
         # since cvss is already split into train, dev, test, I will reuse the same split.
         # the original CV data has no split, but the clips have the same name, so I will just replace the path
-        
+        self.english_folder = main_folder + "/english"
+        self.german_folder = main_folder + "/german"
         # CVSS came with .wav files, CV data was converted to wav for faster loading (mp3 decoding is kinda slow)
-        self.english_audio = [x.absolute() for x in Path(english_folder).rglob('*.wav')]
+        self.english_audio = [x.absolute() for x in Path(self.english_folder).rglob('*.wav')]
         # since we're using pairs and just replacing the folder we only need 1 list
-        self.english_folder = english_folder
-        self.german_folder = german_folder
+
         self.random_segment = random_segment
         self.segment_length = segment_length
         
@@ -27,8 +25,12 @@ class CVSS_T(Dataset):
         english_file = self.english_audio[idx]
         german_file = str(english_file).replace(self.english_folder, self.german_folder)
         
+        
+        
         english_audio = sf.read(english_file)[0]
         german_audio = sf.read(german_file)[0]
+        if "dev" in self.english_folder:
+            print(len(english_audio), len(german_audio))
         
         if self.random_segment:
             start_percent = torch.rand((1,))[0]
@@ -43,10 +45,10 @@ class CVSS_T(Dataset):
             english_audio = english_audio[:self.segment_length]
             german_audio = german_audio[:self.segment_length]
             
-        english_audio = torch.tensor(english_audio).unsqueeze(0)
-        german_audio = torch.tensor(german_audio).unsqueeze(0)
-            
-        return english_audio, german_audio, torch.IntTensor(idx)
+        english_audio = torch.tensor(english_audio).unsqueeze(0).float()
+        german_audio = torch.tensor(german_audio).unsqueeze(0).float()
+   
+        return english_audio, german_audio, torch.LongTensor([idx])
         
         
 if __name__ == "__main__":

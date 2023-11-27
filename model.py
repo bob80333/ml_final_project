@@ -40,7 +40,7 @@ class TransformerModel(nn.Module):
         # x: batch, 1, 16384
         x = self.patcher(x)
         # swap seq and channel dim, convert from patch size to model width
-        x = self.patch_in(x.transpose(0, 2, 1))
+        x = self.patch_in(x.permute(0, 2, 1))
         # x: batch, 64, 256
         x = self.transformer(x)
         # x: batch, 64, 256
