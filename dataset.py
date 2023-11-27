@@ -29,6 +29,7 @@ class CVSS_T(Dataset):
         
         english_audio = sf.read(english_file)[0]
         german_audio = sf.read(german_file)[0]
+        
         if "dev" in self.english_folder:
             print(len(english_audio), len(german_audio))
         
@@ -47,12 +48,16 @@ class CVSS_T(Dataset):
             
         english_audio = torch.tensor(english_audio).unsqueeze(0).float()
         german_audio = torch.tensor(german_audio).unsqueeze(0).float()
+        
+        english_audio = torch.cat((english_audio, torch.zeros(max(self.segment_length - english_audio.shape[1], 0))), dim=0)
+        german_audio = torch.cat((german_audio, torch.zeros(max(self.segment_length - german_audio.shape[1], 0))), dim=0)
+                    
    
         return english_audio, german_audio, torch.LongTensor([idx])
         
         
 if __name__ == "__main__":
-    dataset = CVSS_T('data/cvss_t_de_en_v1.0/train', 'data/de/clips')
+    dataset = CVSS_T('data/cvss_t_de_en_v1.0/train')
     dataloader = DataLoader(dataset, batch_size=8, shuffle=True)
     
     for english_audio, german_audio, idx in dataloader:
