@@ -5,7 +5,7 @@ import dataset
 
 OPTIM = torch.optim.AdamW
 LR = 3e-4
-BATCH_SIZE = 8
+BATCH_SIZE = 64
 
 LOSS = losses.SupConLoss
 

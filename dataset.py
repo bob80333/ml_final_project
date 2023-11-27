@@ -31,9 +31,6 @@ class CVSS_T(Dataset):
         english_audio = sf.read(english_file)[0]
         german_audio = sf.read(german_file)[0]
         
-        if "dev" in self.english_folder:
-            print(len(english_audio), len(german_audio))
-        
         if self.random_segment:
             start_percent = torch.rand((1,))[0]
             
