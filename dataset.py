@@ -1,5 +1,6 @@
 from torch.utils.data import Dataset, DataLoader
 import torch
+import torch.nn.functional as F
 import soundfile as sf # fast crossplatform audio loading
 from pathlib import Path
 
@@ -49,8 +50,10 @@ class CVSS_T(Dataset):
         english_audio = torch.tensor(english_audio).unsqueeze(0).float()
         german_audio = torch.tensor(german_audio).unsqueeze(0).float()
         
-        english_audio = torch.cat((english_audio, torch.zeros(max(self.segment_length - english_audio.shape[1], 0))), dim=0)
-        german_audio = torch.cat((german_audio, torch.zeros(max(self.segment_length - german_audio.shape[1], 0))), dim=0)
+        # pad if not long enough
+        
+        english_audio = F.pad(english_audio, (0, max(self.segment_length - english_audio.shape[1], 0)))
+        german_audio = F.pad(german_audio, (0, max(self.segment_length - german_audio.shape[1], 0)))
                     
    
         return english_audio, german_audio, torch.LongTensor([idx])
