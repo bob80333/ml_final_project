@@ -22,9 +22,9 @@ if __name__ == "__main__":
         print("Training the model")
         trainer = trainer.Trainer(args.device)
         trainer.train()
-    elif args.test:
+    if args.test:
         print("Testing the model")
         tester = tester.Tester(args.device, "checkpoints/best_model.pt")
         tester.test()
-    else:
+    if not args.test or not args.train:
         print("Please specify either --train or --test, neither specified so nothing to do.")
