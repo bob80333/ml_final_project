@@ -1,8 +1,10 @@
-import trainer
-import tester
 import argparse
 import os
+
 import torch
+
+import tester
+import trainer
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

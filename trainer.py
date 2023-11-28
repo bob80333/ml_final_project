@@ -1,7 +1,8 @@
-import config
-import evaluation
 import torch
 from tqdm import trange
+
+import config
+import evaluation
 
 
 def infinite_data_generator(loader):
@@ -29,7 +30,7 @@ class Trainer:
 
         all_audio = torch.cat((english_audio, german_audio), dim=0)
         all_ids = ids.squeeze().repeat(2)
-        
+
         with torch.autocast(self.device, dtype=torch.bfloat16):
             all_embeds = self.model(all_audio)
             loss = self.criterion(all_embeds, all_ids)
@@ -39,7 +40,6 @@ class Trainer:
         return loss.item()
 
     def train(self):
-        print("create data loaders")
         train_loader = torch.utils.data.DataLoader(
             self.train_dataset,
             batch_size=config.BATCH_SIZE,
@@ -59,14 +59,14 @@ class Trainer:
         train_loader = infinite_data_generator(train_loader)
 
         pbar = trange(config.TRAIN_STEPS)
-        print("biuld tensor for values")
         # save values for plotting
         loss_values = torch.empty(config.TRAIN_STEPS)
-        accuracy_values = torch.ones(config.TRAIN_STEPS) * -1 # -1 for non evaluated steps, so we can remove them later when plotting
-        
+        accuracy_values = (
+            torch.ones(config.TRAIN_STEPS) * -1
+        )  # -1 for non evaluated steps, so we can remove them later when plotting
+
         # save best model
         best_accuracy = -1
-        print("start train loop")
         for step in pbar:
             batch = next(train_loader)
             loss = self.train_step(batch)
@@ -79,19 +79,23 @@ class Trainer:
                 accuracy_values[step] = accuracy
                 if best_accuracy < accuracy:
                     best_accuracy = accuracy
-                    torch.save(self.model.state_dict(), f"{config.CHECKPOINT_PATH}/best_model.pt")
-                torch.save(self.model.state_dict(), f"{config.CHECKPOINT_PATH}/model_{step}.pt")
+                    torch.save(
+                        self.model.state_dict(),
+                        f"{config.CHECKPOINT_PATH}/best_model.pt",
+                    )
+                torch.save(
+                    self.model.state_dict(), f"{config.CHECKPOINT_PATH}/model_{step}.pt"
+                )
                 self.model.train()
-                
-                
+
         print("Training complete!")
-        
+
         # save loss and accuracy values for plotting later
         torch.save(loss_values, f"{config.CHECKPOINT_PATH}/loss_values.pt")
         torch.save(accuracy_values, f"{config.CHECKPOINT_PATH}/accuracy_values.pt")
 
     def eval(self, dataloader):
         # return accuracy (k=1)
-        return evaluation.evaluate_r_at_k(dataloader, self.model, self.device, config.KS)[0]
-
-    
+        return evaluation.evaluate_r_at_k(
+            dataloader, self.model, self.device, config.KS
+        )[0]

@@ -1,8 +1,10 @@
-from torch.utils.data import Dataset, DataLoader
+from pathlib import Path
+
+import soundfile as sf  # fast crossplatform audio loading
 import torch
 import torch.nn.functional as F
-import soundfile as sf # fast crossplatform audio loading
-from pathlib import Path
+from torch.utils.data import DataLoader, Dataset
+
 
 class CVSS_T(Dataset):
     def __init__(self, main_folder, segment_length=2**14, random_segment=True):

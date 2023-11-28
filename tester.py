@@ -1,7 +1,8 @@
-from tabnanny import check
+import torch
+
 import config
 import evaluation
-import torch
+
 
 class Tester:
     def __init__(self, device, checkpoint_path):

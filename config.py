@@ -1,7 +1,8 @@
-import torch
 import pytorch_metric_learning.losses as losses
-import model
+import torch
+
 import dataset
+import model
 
 OPTIM = torch.optim.AdamW
 LR = 1e-4

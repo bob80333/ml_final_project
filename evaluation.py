@@ -1,6 +1,5 @@
 import torch
 
-
 # calculate the recall@k
 def evaluate_r_at_k(dataloader, model, device, ks):
     model.eval()

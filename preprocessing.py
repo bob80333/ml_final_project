@@ -29,14 +29,16 @@
 # so this script should put CV into train, dev, test folders based on the CVSS split.
 
 import argparse
+import math
 import os
+import random
+import shutil
 import subprocess
 from pathlib import Path
-import shutil
+
 import torch
 from tqdm import tqdm
-import random
-import math
+
 
 def rescale_speech_timesteps(timesteps, vad_sr, actual_sr):
     scaling_factor = actual_sr / vad_sr
